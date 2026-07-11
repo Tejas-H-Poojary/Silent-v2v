@@ -22,5 +22,5 @@ Users can drop a pin on the map to report an incident, which visibly lowers the 
 5. "How scores work" explainer panel
 6. Recent reports feed
 
-<img src="C:\\Users\\TEJAS\\OneDrive\\Pictures\\Screenshots\\Screenshot (44).png" alt="SafeSphere Route banner" width="100%">
-<img src="C:\\Users\\TEJAS\\OneDrive\\Pictures\\Screenshots\\Screenshot (45).png" alt="SafeSphere Route screenshot" width="100%">
+<img src="Screenshot (44).png" alt="SafeSphere Route banner" width="100%">
+<img src="Screenshot (45).png" alt="SafeSphere Route screenshot" width="100%">
