@@ -1,0 +1,863 @@
+<div id="ss-app" class="ss-app" data-theme="night">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
+
+  .ss-app {
+    --bg: #0F1226;
+    --panel: #171B3A;
+    --border: #2B3163;
+    --text: #EDEFFB;
+    --text-dim: #9AA0C4;
+    --accent: #8B7CF6;
+    --safer: #7FD8A6;
+    --caution: #FFB648;
+    --risk: #F0556B;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    position: relative;
+    width: 100%;
+    min-height: 820px;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: background-color .4s;
+  }
+  .ss-app[data-theme="day"] {
+    --bg: #EAEEF1;
+    --panel: #F5F7F8;
+    --border: #D7DEE2;
+    --text: #1B2230;
+    --text-dim: #5B6472;
+  }
+  .ss-app * { box-sizing: border-box; }
+  .ss-brand-display { font-family: 'Fraunces', serif; font-weight: 600; }
+  .ss-mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* ---------- setup screen ---------- */
+  .ss-setup {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    padding: 24px; z-index: 50;
+  }
+  .ss-setup-card {
+    width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 20px; padding: 28px;
+  }
+  .ss-setup-card h1 { font-size: 22px; margin: 0 0 6px; }
+  .ss-setup-card p { font-size: 13px; color: var(--text-dim); line-height: 1.5; margin: 0 0 18px; }
+  .ss-setup-card input {
+    width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--border);
+    background: transparent; color: var(--text); font-size: 13px; margin-bottom: 12px; outline: none;
+  }
+  .ss-setup-card ul { font-size: 12px; color: var(--text-dim); padding-left: 18px; margin: 0 0 18px; line-height: 1.7; }
+  .ss-btn-primary {
+    width: 100%; padding: 12px; border-radius: 10px; border: none; background: var(--accent);
+    color: #fff; font-weight: 600; font-size: 14px; cursor: pointer;
+  }
+  .ss-btn-primary:disabled { opacity: .6; cursor: default; }
+  .ss-setup-error {
+    display: none; font-size: 12px; color: var(--risk); margin-top: 10px; line-height: 1.5;
+  }
+
+  /* ---------- main screen ---------- */
+  .ss-main { display: none; flex-direction: column; height: 100%; min-height: 820px; }
+  .ss-header {
+    display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 10px;
+  }
+  .ss-brand-row { display: flex; align-items: baseline; gap: 8px; }
+  .ss-brand-name { font-size: 24px; }
+  .ss-brand-tag { font-size: 11px; color: var(--accent); letter-spacing: .06em; }
+  .ss-tagline { font-size: 12px; color: var(--text-dim); margin: 4px 0 0; }
+
+  .ss-toggle { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border);
+    background: var(--panel); border-radius: 999px; padding: 7px 12px; cursor: pointer; }
+  .ss-toggle-track { width: 34px; height: 18px; border-radius: 999px; background: var(--border); position: relative; transition: background-color .3s; }
+  .ss-app[data-theme="night"] .ss-toggle-track { background: var(--accent); }
+  .ss-toggle-knob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 999px; background: #fff; transition: left .3s; }
+  .ss-app[data-theme="night"] .ss-toggle-knob { left: 18px; }
+
+  .ss-body { display: flex; flex: 1; gap: 16px; padding: 0 22px 20px; overflow: hidden; }
+  .ss-sidebar { width: 360px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: 750px; isolation: isolate; overflow-anchor: none; }
+  .ss-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+  .ss-card label { font-size: 11px; font-weight: 500; color: var(--text-dim); display: block; }
+  .ss-ac-slot { position: relative; width: 100%; margin: 6px 0 8px; }
+  .ss-ac-input {
+    width: 100%; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--border);
+    background: transparent; color: var(--text); font-size: 13px; outline: none; box-sizing: border-box;
+  }
+  .ss-ac-input:focus { border-color: var(--accent); }
+  .ss-ac-results {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    list-style: none; margin: 0; padding: 4px; max-height: 220px; overflow-y: auto;
+    display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  .ss-ac-item { padding: 8px 9px; border-radius: 7px; font-size: 12.5px; color: var(--text); cursor: pointer; }
+  .ss-ac-item:hover { background: rgba(139,124,246,0.15); }
+  .ss-divider { border-top: 1px solid var(--border); }
+  .ss-find-btn {
+    width: 100%; margin-top: 6px; padding: 9px; border-radius: 10px; border: 1px solid var(--accent);
+    background: transparent; color: var(--accent); font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .ss-route-error { font-size: 11px; color: var(--risk); margin-top: 8px; display: none; }
+  .ss-loading { font-size: 12px; color: var(--text-dim); display: none; align-items: center; gap: 6px; padding: 4px 0; }
+  .ss-spinner { width: 12px; height: 12px; border-radius: 999px; border: 2px solid var(--border); border-top-color: var(--accent); animation: ss-spin .7s linear infinite; }
+  @keyframes ss-spin { to { transform: rotate(360deg); } }
+
+  .ss-info-btn { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--accent); background: none; border: none; cursor: pointer; padding: 0; }
+  .ss-info-text { font-size: 11px; color: var(--text-dim); line-height: 1.5; background: rgba(139,124,246,0.1); border-radius: 10px; padding: 9px; margin-top: 8px; display: none; }
+
+  .ss-route-row { text-align: left; width: 100%; border-radius: 12px; padding: 10px; margin-top: 4px; border: 1px solid transparent; background: none; cursor: pointer; color: var(--text); }
+  .ss-route-row.selected { border-color: var(--accent); background: rgba(139,124,246,0.12); }
+  .ss-route-top { display: flex; align-items: center; justify-content: space-between; }
+  .ss-route-name-wrap { display: flex; align-items: center; gap: 6px; }
+  .ss-route-name { font-size: 13px; font-weight: 600; }
+  .ss-badge-best { font-size: 9px; font-weight: 700; background: var(--safer); color: #0F3A24; border-radius: 999px; padding: 2px 6px; }
+  .ss-route-score { font-size: 13px; font-weight: 700; }
+  .ss-route-bar-bg { width: 100%; height: 5px; border-radius: 999px; background: var(--border); margin: 6px 0; }
+  .ss-route-bar-fill { height: 5px; border-radius: 999px; transition: width .4s; }
+  .ss-route-meta { font-size: 11px; color: var(--text-dim); }
+
+  .ss-report-btn { width: 100%; padding: 12px; border-radius: 14px; border: none; background: var(--accent); color: #fff; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .ss-report-btn:disabled { opacity: .6; }
+
+  .ss-feed-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+  .ss-feed-icon { width: 22px; height: 22px; border-radius: 999px; background: rgba(139,124,246,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; }
+  .ss-feed-label { font-size: 12px; font-weight: 500; flex: 1; }
+  .ss-feed-time { font-size: 10px; color: var(--text-dim); }
+
+  .ss-map-wrap { flex: 1; border-radius: 16px; overflow: hidden; position: relative; border: 1px solid var(--border); min-height: 460px; }
+  #ss-map { width: 100%; height: 100%; min-height: 460px; }
+  .ss-map-banner { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 20;
+    background: var(--accent); color: #fff; font-size: 12px; font-weight: 500; padding: 7px 12px; border-radius: 999px;
+    display: none; align-items: center; gap: 8px; }
+  .ss-map-banner button { background: none; border: none; color: #fff; cursor: pointer; font-size: 13px; }
+
+  .ss-legend { position: absolute; bottom: 12px; left: 12px; z-index: 15; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 8px 10px; font-size: 10px; color: var(--text-dim); }
+  .ss-legend-row { display: flex; gap: 10px; margin-bottom: 4px; }
+  .ss-legend-dot { width: 7px; height: 7px; border-radius: 999px; display: inline-block; margin-right: 4px; }
+
+  .ss-score-chip { position: absolute; transform: translate(-50%,-50%); background: var(--panel); border: 2px solid; border-radius: 999px;
+    padding: 2px 9px; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; pointer-events: none; white-space: nowrap; }
+
+  /* ---------- modal ---------- */
+  .ss-modal-overlay { position: fixed; inset: 0; background: rgba(10,12,28,0.6); z-index: 100; display: none; align-items: center; justify-content: center; }
+  .ss-modal { width: 100%; max-width: 340px; margin: 0 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 18px; }
+  .ss-modal-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .ss-modal-top span { font-size: 13px; font-weight: 600; }
+  .ss-modal-top button { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 15px; }
+  .ss-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ss-modal-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; border-radius: 12px; border: none;
+    background: rgba(139,124,246,0.1); color: var(--text); font-size: 11px; font-weight: 500; cursor: pointer; }
+  .ss-modal-btn .ss-emoji { font-size: 18px; }
+
+  @media (max-width: 860px) {
+    .ss-body { flex-direction: column; overflow: visible; }
+    .ss-sidebar { width: 100%; max-height: none; }
+    .ss-map-wrap { min-height: 420px; }
+  }
+</style>
+
+<!-- ============ SETUP SCREEN ============ -->
+<div class="ss-setup" id="ss-setup">
+  <div class="ss-setup-card">
+    <h1 class="ss-brand-display">Connect Google Maps</h1>
+    <p>Paste a Google Maps API key to launch SafeSphere Route. This stays in memory only — nothing is saved or sent anywhere else.</p>
+    <input id="ss-key-input" type="text" placeholder="Google Maps API key" />
+    <ul>
+      <li>Enable in Google Cloud Console: <b>Maps JavaScript API</b>, <b>Places API</b>, <b>Directions API</b></li>
+      <li>Free tier covers typical hackathon usage</li>
+    </ul>
+    <button class="ss-btn-primary" id="ss-launch-btn">Launch map</button>
+    <div class="ss-setup-error" id="ss-setup-error"></div>
+  </div>
+</div>
+
+<!-- ============ MAIN SCREEN ============ -->
+<div class="ss-main" id="ss-main">
+  <div class="ss-header">
+    <div>
+      <div class="ss-brand-row">
+        <span class="ss-brand-name ss-brand-display">SafeSphere</span>
+        <span class="ss-brand-tag ss-mono">ROUTE</span>
+      </div>
+      <p class="ss-tagline">See which street is lit before you walk it.</p>
+    </div>
+    <div class="ss-toggle" id="ss-theme-toggle">
+      <span style="font-size:13px">☀️</span>
+      <div class="ss-toggle-track"><div class="ss-toggle-knob"></div></div>
+      <span style="font-size:13px">🌙</span>
+    </div>
+  </div>
+
+  <div class="ss-body">
+    <div class="ss-sidebar">
+      <div class="ss-card">
+        <label>From</label>
+        <div class="ss-ac-slot">
+          <input type="text" id="ss-from-input" class="ss-ac-input" placeholder="Starting point" autocomplete="off" />
+          <ul class="ss-ac-results" id="ss-from-results"></ul>
+        </div>
+        <div class="ss-divider"></div>
+        <label style="margin-top:8px">To</label>
+        <div class="ss-ac-slot">
+          <input type="text" id="ss-to-input" class="ss-ac-input" placeholder="Destination" autocomplete="off" />
+          <ul class="ss-ac-results" id="ss-to-results"></ul>
+        </div>
+        <button class="ss-find-btn" id="ss-find-btn">Find safe routes</button>
+        <div class="ss-loading" id="ss-loading"><div class="ss-spinner"></div>Calculating safety scores…</div>
+        <div class="ss-route-error" id="ss-route-error"></div>
+      </div>
+
+      <div class="ss-card" id="ss-routes-card">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:13px;font-weight:600">Routes</span>
+          <button class="ss-info-btn" id="ss-info-btn">ⓘ How scores work</button>
+        </div>
+        <div class="ss-info-text" id="ss-info-text">
+          Scores combine real nearby business/foot-traffic density along each route (via Places API — more open businesses means more "eyes on the street"), real community reports measured by true GPS distance, and time of day. This is a heuristic, not verified crime data.
+        </div>
+        <p id="ss-routes-empty" style="font-size:12px;color:var(--text-dim);margin:8px 0 0">Pick a "From" and "To" above to see safe routes here.</p>
+        <div id="ss-routes-list"></div>
+      </div>
+
+      <button class="ss-report-btn" id="ss-report-btn">⚠️ Report an incident</button>
+
+      <div class="ss-card">
+        <span style="font-size:13px;font-weight:600">Recent reports</span>
+        <div id="ss-feed" style="margin-top:6px"></div>
+        <p id="ss-feed-empty" style="font-size:12px;color:var(--text-dim);margin:4px 0 0">No reports yet — this area looks clear.</p>
+      </div>
+    </div>
+
+    <div class="ss-map-wrap">
+      <div class="ss-map-banner" id="ss-map-banner">
+        Click anywhere on the map to drop a pin
+        <button id="ss-cancel-report">✕</button>
+      </div>
+      <div id="ss-map"></div>
+      <div class="ss-legend">
+        <div class="ss-legend-row">
+          <span><span class="ss-legend-dot" style="background:var(--safer)"></span>Safer</span>
+          <span><span class="ss-legend-dot" style="background:var(--caution)"></span>Caution</span>
+          <span><span class="ss-legend-dot" style="background:var(--risk)"></span>Higher risk</span>
+        </div>
+        <span>Score = real business density + real reports + time of day</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CATEGORY MODAL ============ -->
+<div class="ss-modal-overlay" id="ss-modal-overlay">
+  <div class="ss-modal">
+    <div class="ss-modal-top">
+      <span>What did you notice here?</span>
+      <button id="ss-modal-close">✕</button>
+    </div>
+    <div class="ss-modal-grid" id="ss-modal-grid"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+(function () {
+  var root = document.getElementById('ss-app');
+
+  /* ---------------- constants ---------------- */
+  var INCIDENT_TYPES = {
+    lighting:  { label: 'Poor lighting',        emoji: '💡', severity: 8  },
+    unsafe:    { label: 'Felt unsafe',           emoji: '🛡️', severity: 12 },
+    harassment:{ label: 'Harassment reported',   emoji: '⚠️', severity: 18 },
+    suspicious:{ label: 'Suspicious activity',   emoji: '👁️', severity: 14 }
+  };
+  var ROUTE_COLORS_FALLBACK = ['#8B7CF6', '#5FB0D9', '#D98BC9'];
+  var INCIDENT_RADIUS_M = 150;
+
+  var NIGHT_STYLE = [
+    { elementType: 'geometry', stylers: [{ color: '#14172f' }] },
+    { elementType: 'labels.text.stroke', stylers: [{ color: '#0b0d1e' }] },
+    { elementType: 'labels.text.fill', stylers: [{ color: '#8b90b8' }] },
+    { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#2b3163' }] },
+    { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1f2450' }] },
+    { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#14172f' }] },
+    { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#242a5c' }] },
+    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#2b3270' }] },
+    { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0a0c22' }] },
+    { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4c528f' }] }
+  ];
+  var LIGHT_STYLE = [
+    { elementType: 'labels.text.fill', stylers: [{ color: '#5b6472' }] },
+    { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }] },
+    { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#dce8dd' }] },
+    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+    { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#f1f0e9' }] },
+    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#e9e6da' }] },
+    { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#dce3e6' }] }
+  ];
+
+  /* ---------------- state ---------------- */
+  var map, PlaceClass, RouteClass;
+  var fromPlace = null, toPlace = null;
+  var routes = [];          // {overviewPath, distanceText, durationText, summary, score, activity, polyline, glowPolyline, chip}
+  var incidents = [];       // {id, latLng, type, time, marker}
+  var mode = 'night';
+  var reportMode = false;
+  var pendingLatLng = null;
+  var selectedRouteIdx = null;
+  var startMarker = null, endMarker = null;
+
+  /* ---------------- geometry / scoring ---------------- */
+  /* Route path points from Route.computeRoutes() aren't guaranteed to be full
+     google.maps.LatLng instances (can arrive as plain {lat, lng} literals) —
+     but our own distance math below calls .lat()/.lng() on them, which throws
+     "a.lat is not a function" on a literal. Normalize once, right after we
+     receive a route, so every downstream consumer can rely on real LatLngs. */
+  function toLatLng(p) {
+    if (p instanceof google.maps.LatLng) return p;
+    var lat = typeof p.lat === 'function' ? p.lat() : p.lat;
+    var lng = typeof p.lng === 'function' ? p.lng() : p.lng;
+    return new google.maps.LatLng(lat, lng);
+  }
+  function normalizePath(path) {
+    return (path || []).map(toLatLng);
+  }
+
+  function distPointToSegmentMeters(point, a, b) {
+    var min = Infinity, steps = 6;
+    for (var s = 0; s <= steps; s++) {
+      var t = s / steps;
+      var lat = a.lat() + (b.lat() - a.lat()) * t;
+      var lng = a.lng() + (b.lng() - a.lng()) * t;
+      var d = google.maps.geometry.spherical.computeDistanceBetween(point, new google.maps.LatLng(lat, lng));
+      if (d < min) min = d;
+    }
+    return min;
+  }
+  function distPointToPolylineMeters(point, path) {
+    var min = Infinity;
+    for (var i = 0; i < path.length - 1; i++) {
+      var d = distPointToSegmentMeters(point, path[i], path[i + 1]);
+      if (d < min) min = d;
+    }
+    return min;
+  }
+  function samplePoints(path, n) {
+    if (path.length <= n) return path.slice();
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      var idx = Math.floor((i / (n - 1)) * (path.length - 1));
+      out.push(path[idx]);
+    }
+    return out;
+  }
+  function countNearbyPlaces(latLng) {
+    return PlaceClass.searchNearby({
+      fields: ['id'],
+      locationRestriction: { center: latLng, radius: 120 },
+      maxResultCount: 10
+    }).then(function (res) {
+      return res && res.places ? res.places.length : 0;
+    }).catch(function () {
+      return 0;
+    });
+  }
+  function measureActivity(route) {
+    var pts = samplePoints(route.overviewPath, 3);
+    return Promise.all(pts.map(countNearbyPlaces)).then(function (counts) {
+      var avg = counts.reduce(function (a, b) { return a + b; }, 0) / counts.length;
+      route.activity = avg;
+    });
+  }
+  function computeScore(route) {
+    var activityComponent = Math.min(route.activity || 0, 12) / 12 * 40;
+    var score = 50 + activityComponent + (mode === 'night' ? -6 : 5);
+    incidents.forEach(function (inc) {
+      var d = distPointToPolylineMeters(inc.latLng, route.overviewPath);
+      if (d < INCIDENT_RADIUS_M) {
+        score -= INCIDENT_TYPES[inc.type].severity * (1 - d / INCIDENT_RADIUS_M);
+      }
+    });
+    return Math.max(2, Math.min(98, Math.round(score)));
+  }
+  function scoreColor(score) {
+    if (score >= 75) return getVar('--safer');
+    if (score >= 50) return getVar('--caution');
+    return getVar('--risk');
+  }
+  function getVar(name) {
+    return getComputedStyle(root).getPropertyValue(name).trim();
+  }
+  function timeAgo(ts) {
+    var s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 45) return 'Just now';
+    var m = Math.floor(s / 60);
+    if (m < 60) return m + 'm ago';
+    return Math.floor(m / 60) + 'h ago';
+  }
+  function formatDistance(meters) {
+    if (!meters && meters !== 0) return '';
+    if (meters < 1000) return Math.round(meters) + ' m';
+    return (meters / 1000).toFixed(1) + ' km';
+  }
+  function formatDuration(millis) {
+    if (!millis && millis !== 0) return '';
+    var mins = Math.round(millis / 60000);
+    if (mins < 60) return mins + ' min';
+    var hrs = Math.floor(mins / 60);
+    return hrs + 'h ' + (mins % 60) + 'm';
+  }
+
+  /* ---------------- score chip overlay ----------------
+     NOTE: this class extends google.maps.OverlayView, so it can only be
+     defined AFTER the Maps script has loaded. It's built lazily inside
+     __ssInitMaps() below, not at top-level script parse time. */
+  var ScoreChipOverlay;
+  function defineScoreChipOverlay() {
+    ScoreChipOverlay = function (position, score, color) {
+      this.position = position;
+      this.score = score;
+      this.color = color;
+    };
+    ScoreChipOverlay.prototype = Object.create(google.maps.OverlayView.prototype);
+    ScoreChipOverlay.prototype.onAdd = function () {
+      this.div = document.createElement('div');
+      this.div.className = 'ss-score-chip';
+      this.div.style.borderColor = this.color;
+      this.div.style.color = this.color;
+      this.div.textContent = this.score;
+      this.getPanes().overlayMouseTarget.appendChild(this.div);
+    };
+    ScoreChipOverlay.prototype.draw = function () {
+      var proj = this.getProjection();
+      if (!proj || !this.div) return;
+      var pos = proj.fromLatLngToDivPixel(this.position);
+      this.div.style.left = pos.x + 'px';
+      this.div.style.top = pos.y + 'px';
+    };
+    ScoreChipOverlay.prototype.onRemove = function () {
+      if (this.div && this.div.parentNode) this.div.parentNode.removeChild(this.div);
+      this.div = null;
+    };
+  }
+
+  /* ---------------- custom autocomplete (fixes PlaceAutocompleteElement layout escape) ---------------- */
+  function setupAutocompleteInput(inputEl, listEl, AutocompleteSuggestion, AutocompleteSessionToken, onSelect, onInvalidate) {
+    var debounceTimer = null;
+    var sessionToken = null;
+
+    inputEl.addEventListener('input', function () {
+      if (onInvalidate) onInvalidate();
+      clearTimeout(debounceTimer);
+      var query = inputEl.value.trim();
+      if (!query) { closeList(); return; }
+      debounceTimer = setTimeout(function () { runQuery(query); }, 250);
+    });
+
+    document.addEventListener('click', function (e) {
+      if (e.target !== inputEl && !listEl.contains(e.target)) closeList();
+    });
+
+    function closeList() {
+      listEl.innerHTML = '';
+      listEl.style.display = 'none';
+    }
+
+    async function runQuery(query) {
+      if (!sessionToken) sessionToken = new AutocompleteSessionToken();
+      try {
+        var res = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
+          input: query,
+          sessionToken: sessionToken
+        });
+        renderSuggestions(res && res.suggestions ? res.suggestions : []);
+      } catch (err) {
+        closeList();
+      }
+    }
+
+    function renderSuggestions(suggestions) {
+      listEl.innerHTML = '';
+      if (!suggestions.length) { listEl.style.display = 'none'; return; }
+      suggestions.forEach(function (s) {
+        var pred = s.placePrediction;
+        if (!pred) return;
+        var li = document.createElement('li');
+        li.className = 'ss-ac-item';
+        li.textContent = pred.text.toString();
+        li.addEventListener('click', async function () {
+          inputEl.value = pred.text.toString();
+          closeList();
+          var place = pred.toPlace();
+          await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location'] });
+          sessionToken = null;
+          onSelect(place);
+        });
+        listEl.appendChild(li);
+      });
+      listEl.style.display = 'block';
+    }
+  }
+
+  /* ---------------- map init ---------------- */
+  window.__ssInitMaps = async function () {
+    defineScoreChipOverlay();
+    var mapEl = document.getElementById('ss-map');
+    var center = { lat: 40.7128, lng: -74.0060 };
+    map = new google.maps.Map(mapEl, {
+      center: center, zoom: 13, styles: NIGHT_STYLE,
+      mapTypeControl: false, streetViewControl: false, fullscreenControl: false
+    });
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        map.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      }, function () {}, { timeout: 3000 });
+    }
+
+    var libs = await Promise.all([
+      google.maps.importLibrary('places'),
+      google.maps.importLibrary('routes'),
+      google.maps.importLibrary('geometry')
+    ]);
+    var placesLib = libs[0], routesLib = libs[1];
+    PlaceClass = placesLib.Place;
+    RouteClass = routesLib.Route;
+    var AutocompleteSuggestion = placesLib.AutocompleteSuggestion;
+    var AutocompleteSessionToken = placesLib.AutocompleteSessionToken;
+
+    setupAutocompleteInput(
+      document.getElementById('ss-from-input'),
+      document.getElementById('ss-from-results'),
+      AutocompleteSuggestion, AutocompleteSessionToken,
+      function (place) { fromPlace = place; maybeAutoSearch(); },
+      function () { fromPlace = null; }
+    );
+    setupAutocompleteInput(
+      document.getElementById('ss-to-input'),
+      document.getElementById('ss-to-results'),
+      AutocompleteSuggestion, AutocompleteSessionToken,
+      function (place) { toPlace = place; maybeAutoSearch(); },
+      function () { toPlace = null; }
+    );
+
+    map.addListener('click', function (e) {
+      if (!reportMode) return;
+      pendingLatLng = e.latLng;
+      setReportMode(false);
+      openModal();
+    });
+
+    document.getElementById('ss-setup').style.display = 'none';
+    document.getElementById('ss-main').style.display = 'flex';
+  };
+
+  function loadGoogleMaps(key) {
+    return new Promise(function (resolve, reject) {
+      window.__ssMapsCallback = resolve;
+      var s = document.createElement('script');
+      s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) + '&libraries=places,geometry&callback=__ssMapsCallback';
+      s.async = true;
+      s.onerror = function () { reject(new Error('Could not load the Google Maps script. Check your key and network access.')); };
+      document.head.appendChild(s);
+      setTimeout(function () {
+        if (typeof google === 'undefined') reject(new Error('Timed out waiting for Google Maps. Check your API key and that billing/APIs are enabled.'));
+      }, 8000);
+    });
+  }
+
+  document.getElementById('ss-launch-btn').addEventListener('click', function () {
+    var key = document.getElementById('ss-key-input').value.trim();
+    var errEl = document.getElementById('ss-setup-error');
+    errEl.style.display = 'none';
+    if (!key) { errEl.textContent = 'Paste an API key first.'; errEl.style.display = 'block'; return; }
+    this.disabled = true; this.textContent = 'Connecting…';
+    var btn = this;
+    loadGoogleMaps(key).then(function () {
+      window.__ssInitMaps();
+    }).catch(function (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Launch map';
+    });
+  });
+  document.getElementById('ss-key-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('ss-launch-btn').click();
+  });
+
+  /* ---------------- directions / routing ---------------- */
+  function maybeAutoSearch() {
+    if (fromPlace && toPlace) findRoutes();
+  }
+  document.getElementById('ss-find-btn').addEventListener('click', findRoutes);
+
+  var ROUTE_FIELDS = ['path', 'distanceMeters', 'durationMillis', 'description'];
+
+  // Google's docs recommend passing full Place objects for origin/destination
+  // (more accurate, avoids snapping issues) rather than a bare LatLng — passing
+  // `.location` directly was the root cause of "a.lat is not a function".
+  // If a Place is somehow missing usable fields, fall back to a plain
+  // {lat, lng} literal, which is the most universally-accepted shape.
+  async function computeSafeRoutes(origin, destination) {
+    try {
+      return await RouteClass.computeRoutes({
+        origin: origin,
+        destination: destination,
+        travelMode: 'WALKING',
+        computeAlternativeRoutes: true,
+        fields: ROUTE_FIELDS
+      });
+    } catch (err) {
+      var originLoc = origin && origin.location;
+      var destLoc = destination && destination.location;
+      if (!originLoc || !destLoc) throw err;
+      return await RouteClass.computeRoutes({
+        origin: { lat: originLoc.lat(), lng: originLoc.lng() },
+        destination: { lat: destLoc.lat(), lng: destLoc.lng() },
+        travelMode: 'WALKING',
+        computeAlternativeRoutes: true,
+        fields: ROUTE_FIELDS
+      });
+    }
+  }
+
+  async function findRoutes() {
+    var errEl = document.getElementById('ss-route-error');
+    errEl.style.display = 'none';
+    if (!fromPlace || !toPlace) {
+      errEl.textContent = 'Choose a "From" and "To" location from the autocomplete suggestions.';
+      errEl.style.display = 'block';
+      return;
+    }
+    document.getElementById('ss-loading').style.display = 'flex';
+    document.getElementById('ss-routes-empty').style.display = 'none';
+
+    try {
+      var result = await computeSafeRoutes(fromPlace, toPlace);
+      var routeResults = result && result.routes;
+      if (!routeResults || routeResults.length === 0) {
+        document.getElementById('ss-loading').style.display = 'none';
+        document.getElementById('ss-routes-list').innerHTML = '';
+        document.getElementById('ss-routes-empty').style.display = 'block';
+        errEl.textContent = 'Could not find a walking route between these points.';
+        errEl.style.display = 'block';
+        return;
+      }
+      clearRoutes();
+      routes = routeResults.map(function (r, i) {
+        return {
+          overviewPath: normalizePath(r.path),
+          distanceText: formatDistance(r.distanceMeters),
+          durationText: formatDuration(r.durationMillis),
+          summary: r.description || ('Route ' + (i + 1)),
+          activity: 0
+        };
+      });
+      placeEndpointMarkers();
+      var bounds = new google.maps.LatLngBounds();
+      routes.forEach(function (r) { r.overviewPath.forEach(function (p) { bounds.extend(p); }); });
+      map.fitBounds(bounds);
+
+      await Promise.all(routes.map(measureActivity));
+      document.getElementById('ss-loading').style.display = 'none';
+      document.getElementById('ss-routes-empty').style.display = 'none';
+      selectedRouteIdx = null;
+      drawRoutes();
+      renderRoutesList();
+    } catch (err) {
+      document.getElementById('ss-loading').style.display = 'none';
+      document.getElementById('ss-routes-list').innerHTML = '';
+      document.getElementById('ss-routes-empty').style.display = 'block';
+      errEl.textContent = 'Could not compute a walking route: ' + (err && err.message ? err.message : err);
+      errEl.style.display = 'block';
+    }
+  }
+
+  function placeEndpointMarkers() {
+    if (startMarker) startMarker.setMap(null);
+    if (endMarker) endMarker.setMap(null);
+    startMarker = new google.maps.Marker({
+      position: fromPlace.location, map: map,
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#7FD8A6', fillOpacity: 1, strokeColor: '#0F1226', strokeWeight: 2.5 },
+      title: fromPlace.displayName || fromPlace.formattedAddress || 'Start'
+    });
+    endMarker = new google.maps.Marker({
+      position: toPlace.location, map: map,
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#8B7CF6', fillOpacity: 1, strokeColor: '#0F1226', strokeWeight: 2.5 },
+      title: toPlace.displayName || toPlace.formattedAddress || 'Destination'
+    });
+  }
+
+  function clearRoutes() {
+    routes.forEach(function (r) {
+      if (r.polyline) r.polyline.setMap(null);
+      if (r.glowPolyline) r.glowPolyline.setMap(null);
+      if (r.chip) r.chip.setMap(null);
+    });
+    routes = [];
+  }
+
+  function drawRoutes() {
+    routes.forEach(function (r) {
+      if (r.polyline) r.polyline.setMap(null);
+      if (r.glowPolyline) r.glowPolyline.setMap(null);
+      if (r.chip) r.chip.setMap(null);
+    });
+    routes.forEach(function (route, i) {
+      var score = computeScore(route);
+      route.score = score;
+      var color = scoreColor(score);
+      var dim = selectedRouteIdx !== null && selectedRouteIdx !== i;
+
+      route.glowPolyline = new google.maps.Polyline({
+        path: route.overviewPath, map: dim ? null : map, strokeColor: color,
+        strokeOpacity: mode === 'night' ? 0.35 : 0.2, strokeWeight: 14, zIndex: 1
+      });
+      route.polyline = new google.maps.Polyline({
+        path: route.overviewPath, map: map, strokeColor: color,
+        strokeOpacity: dim ? 0.3 : 1, strokeWeight: dim ? 3 : 5.5, zIndex: 2
+      });
+      route.polyline.addListener('click', function () {
+        selectedRouteIdx = selectedRouteIdx === i ? null : i;
+        drawRoutes();
+        renderRoutesList();
+      });
+
+      var mid = route.overviewPath[Math.floor(route.overviewPath.length / 2)];
+      route.chip = new ScoreChipOverlay(mid, score, color);
+      if (!dim) route.chip.setMap(map);
+    });
+  }
+
+  function rescoreAndRedraw() {
+    if (!routes.length) return;
+    drawRoutes();
+    renderRoutesList();
+  }
+
+  /* ---------------- sidebar rendering ---------------- */
+  function renderRoutesList() {
+    var listEl = document.getElementById('ss-routes-list');
+    listEl.innerHTML = '';
+    var bestIdx = 0;
+    routes.forEach(function (r, i) { if (r.score > routes[bestIdx].score) bestIdx = i; });
+
+    routes.forEach(function (route, i) {
+      var color = scoreColor(route.score);
+      var nearby = incidents.filter(function (inc) {
+        return distPointToPolylineMeters(inc.latLng, route.overviewPath) < INCIDENT_RADIUS_M;
+      }).length;
+
+      var row = document.createElement('button');
+      row.className = 'ss-route-row' + (selectedRouteIdx === i ? ' selected' : '');
+      row.innerHTML =
+        '<div class="ss-route-top">' +
+          '<div class="ss-route-name-wrap">' +
+            '<span class="ss-route-name">' + escapeHtml(route.summary) + '</span>' +
+            (i === bestIdx ? '<span class="ss-badge-best">BEST</span>' : '') +
+          '</div>' +
+          '<span class="ss-route-score ss-mono" style="color:' + color + '">' + route.score + '</span>' +
+        '</div>' +
+        '<div class="ss-route-bar-bg"><div class="ss-route-bar-fill" style="width:' + route.score + '%;background:' + color + '"></div></div>' +
+        '<div class="ss-route-meta">' + route.distanceText + ' · ' + route.durationText +
+          (nearby > 0 ? ' — ' + nearby + ' report' + (nearby > 1 ? 's' : '') + ' nearby' : '') + '</div>';
+      row.addEventListener('click', function () {
+        selectedRouteIdx = selectedRouteIdx === i ? null : i;
+        drawRoutes();
+        renderRoutesList();
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  function renderFeed() {
+    var feedEl = document.getElementById('ss-feed');
+    var emptyEl = document.getElementById('ss-feed-empty');
+    feedEl.innerHTML = '';
+    var sorted = incidents.slice().sort(function (a, b) { return b.time - a.time; });
+    emptyEl.style.display = sorted.length ? 'none' : 'block';
+    sorted.forEach(function (inc) {
+      var meta = INCIDENT_TYPES[inc.type];
+      var row = document.createElement('div');
+      row.className = 'ss-feed-item';
+      row.innerHTML =
+        '<div class="ss-feed-icon">' + meta.emoji + '</div>' +
+        '<div class="ss-feed-label">' + meta.label + '</div>' +
+        '<div class="ss-feed-time ss-mono">' + timeAgo(inc.time) + '</div>';
+      feedEl.appendChild(row);
+    });
+  }
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  /* ---------------- incident reporting ---------------- */
+  var reportBtn = document.getElementById('ss-report-btn');
+  reportBtn.addEventListener('click', function () { setReportMode(true); });
+  document.getElementById('ss-cancel-report').addEventListener('click', function () { setReportMode(false); });
+
+  function setReportMode(on) {
+    reportMode = on;
+    document.getElementById('ss-map-banner').style.display = on ? 'flex' : 'none';
+    document.getElementById('ss-map').style.cursor = on ? 'crosshair' : '';
+    reportBtn.disabled = on;
+    reportBtn.textContent = on ? 'Click the map to place a pin…' : '⚠️ Report an incident';
+  }
+
+  var modalOverlay = document.getElementById('ss-modal-overlay');
+  var modalGrid = document.getElementById('ss-modal-grid');
+  function openModal() {
+    modalGrid.innerHTML = '';
+    Object.keys(INCIDENT_TYPES).forEach(function (key) {
+      var meta = INCIDENT_TYPES[key];
+      var btn = document.createElement('button');
+      btn.className = 'ss-modal-btn';
+      btn.innerHTML = '<span class="ss-emoji">' + meta.emoji + '</span><span>' + meta.label + '</span>';
+      btn.addEventListener('click', function () { confirmIncident(key); });
+      modalGrid.appendChild(btn);
+    });
+    modalOverlay.style.display = 'flex';
+  }
+  document.getElementById('ss-modal-close').addEventListener('click', closeModal);
+  function closeModal() {
+    modalOverlay.style.display = 'none';
+    pendingLatLng = null;
+  }
+  function confirmIncident(type) {
+    if (!pendingLatLng) return;
+    var marker = new google.maps.Marker({
+      position: pendingLatLng, map: map,
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: '#F0556B', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 }
+    });
+    var inc = { id: Date.now(), latLng: pendingLatLng, type: type, time: Date.now(), marker: marker };
+    marker.addListener('click', function () {
+      new google.maps.InfoWindow({ content: '<div style="font-size:12px">' + INCIDENT_TYPES[type].label + '</div>' }).open(map, marker);
+    });
+    incidents.push(inc);
+    closeModal();
+    renderFeed();
+    rescoreAndRedraw();
+  }
+
+  /* ---------------- theme toggle ---------------- */
+  document.getElementById('ss-theme-toggle').addEventListener('click', function () {
+    mode = mode === 'night' ? 'day' : 'night';
+    root.setAttribute('data-theme', mode);
+    if (map) map.setOptions({ styles: mode === 'night' ? NIGHT_STYLE : LIGHT_STYLE });
+    rescoreAndRedraw();
+  });
+
+  document.getElementById('ss-info-btn').addEventListener('click', function () {
+    var el = document.getElementById('ss-info-text');
+    el.style.display = el.style.display === 'block' ? 'none' : 'block';
+  });
+})();
+</script>
